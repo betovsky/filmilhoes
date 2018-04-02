@@ -1,0 +1,9 @@
+[package]
+name = "filmilhoes"
+version = "0.1.0"
+authors = ["Miguel Bento"]
+
+[dependencies]
+structopt = "0.2.*"
+structopt-derive = "0.2.*"
+human-size = "0.3.*"
