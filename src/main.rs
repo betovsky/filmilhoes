@@ -41,7 +41,6 @@ fn main() {
     let sample = seq::sample_slice(&mut rng, &files, opt.n);
 
     for file in sample.iter() {
-        // let name = file.strip_prefix(&opt.directory).unwrap_or(file);
         let name = file.file_name().unwrap().to_string_lossy();
         let size = get_file_len(file).unwrap_or(0);
         let readable_size = format_size(size);
@@ -62,7 +61,7 @@ fn format_size(size: u64) -> String {
         scale += 1;
     }
 
-    format!("{:7.2} {}", scalled, SCALES[scale])
+    format!("{:7.2} {:>3}", scalled, SCALES[scale])
 }
 
 fn get_files(directory: &PathBuf, min_size: u64) -> Vec<PathBuf> {
