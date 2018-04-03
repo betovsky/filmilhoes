@@ -43,7 +43,11 @@ fn main() {
     let files = get_files(&opt.directory, min_size, &opt.exclude);
 
     let mut rng = thread_rng();
-    let sample = seq::sample_slice(&mut rng, &files, opt.n);
+    let sample = if files.len() >= opt.n {
+        seq::sample_slice(&mut rng, &files, opt.n)
+    } else {
+        files
+    };
 
     for file in sample.iter() {
         let name = file.file_name().unwrap().to_string_lossy();
@@ -51,7 +55,6 @@ fn main() {
         let readable_size = format_size(size);
         println!(" {} ║ {}", readable_size, name);
     }
-
 }
 
 static SCALES: &'static [&str] = &["B", "KiB", "MiB", "GiB", "TiB"];
