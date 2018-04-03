@@ -3,11 +3,14 @@
 extern crate structopt;
 
 extern crate human_size;
+extern crate rand;
 
 use std::fs::DirEntry;
 use std::io::Result;
 use std::path::PathBuf;
+
 use human_size::Size;
+use rand::{thread_rng, seq};
 use structopt::StructOpt;
 
 /// Filmilhoes - random pick files
@@ -34,16 +37,20 @@ fn main() {
     let min_size = opt.min_size.into_bytes() as u64;
     let files = get_files(&opt.directory, min_size);
 
-    for file in files.iter().take(opt.n) {
-        let name = file.strip_prefix(&opt.directory).unwrap_or(file);
+    let mut rng = thread_rng();
+    let sample = seq::sample_slice(&mut rng, &files, opt.n);
+
+    for file in sample.iter() {
+        // let name = file.strip_prefix(&opt.directory).unwrap_or(file);
+        let name = file.file_name().unwrap().to_string_lossy();
         let size = get_file_len(file).unwrap_or(0);
         let readable_size = format_size(size);
-        println!("File: {}   (Size: {})", name.display(), readable_size);
+        println!(" {} ║ {}", readable_size, name);
     }
 
 }
 
-static SCALES: &'static [&str] = &["B", "KB", "MB", "GB", "TB"];
+static SCALES: &'static [&str] = &["B", "KiB", "MiB", "GiB", "TiB"];
 
 fn format_size(size: u64) -> String {
     let mut scale = 0usize;
@@ -55,7 +62,7 @@ fn format_size(size: u64) -> String {
         scale += 1;
     }
 
-    format!("{:.2} {}", scalled, SCALES[scale])
+    format!("{:7.2} {}", scalled, SCALES[scale])
 }
 
 fn get_files(directory: &PathBuf, min_size: u64) -> Vec<PathBuf> {
