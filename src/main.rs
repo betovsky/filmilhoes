@@ -5,6 +5,7 @@ extern crate structopt;
 extern crate human_size;
 extern crate rand;
 
+use std::ffi::OsString;
 use std::fs::DirEntry;
 use std::io::Result;
 use std::path::PathBuf;
@@ -27,7 +28,11 @@ struct Opt {
     
     /// Minimum size of files to pick
     #[structopt(short = "s", long = "size", default_value = "100MB")]
-    min_size: Size
+    min_size: Size,
+
+    /// Directories to exclude
+    #[structopt(short = "x", long = "exclude", parse(from_os_str))]
+    exclude: Vec<OsString>,
 }
 
 
@@ -35,7 +40,7 @@ fn main() {
     let opt = Opt::from_args();
 
     let min_size = opt.min_size.into_bytes() as u64;
-    let files = get_files(&opt.directory, min_size);
+    let files = get_files(&opt.directory, min_size, &opt.exclude);
 
     let mut rng = thread_rng();
     let sample = seq::sample_slice(&mut rng, &files, opt.n);
@@ -64,7 +69,7 @@ fn format_size(size: u64) -> String {
     format!("{:7.2} {:>3}", scalled, SCALES[scale])
 }
 
-fn get_files(directory: &PathBuf, min_size: u64) -> Vec<PathBuf> {
+fn get_files(directory: &PathBuf, min_size: u64, exclude: &[OsString]) -> Vec<PathBuf> {
     if !directory.is_dir() {
         return Vec::new();
     }
@@ -78,7 +83,7 @@ fn get_files(directory: &PathBuf, min_size: u64) -> Vec<PathBuf> {
                 }
             }
         };
-        visit_dirs(directory, &mut check_file).expect("Failed to search directory");
+        visit_dirs(directory, exclude, &mut check_file).expect("Failed to search directory");
     }
     vec
 }
@@ -88,13 +93,16 @@ fn get_file_len(path: &PathBuf) -> Result<u64> {
     Ok(metadata.len())
 }
 
-fn visit_dirs(dir: &PathBuf, cb: &mut FnMut(&DirEntry)) -> Result<()> {
+fn visit_dirs(dir: &PathBuf, exclude: &[OsString], cb: &mut FnMut(&DirEntry)) -> Result<()> {
     if dir.is_dir() {
         for entry in dir.read_dir()? {
             let entry = entry?;
             let path = entry.path();
             if path.is_dir() {
-                visit_dirs(&path, cb)?;
+                let name = entry.file_name();
+                if !exclude.contains(&name) {
+                    visit_dirs(&path, exclude, cb)?;
+                }
             } else {
                 cb(&entry);
             }
