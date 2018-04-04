@@ -1,6 +1,6 @@
 [package]
 name = "filmilhoes"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Miguel Bento"]
 
 [dependencies]
@@ -8,3 +8,4 @@ structopt = "0.2.*"
 structopt-derive = "0.2.*"
 human-size = "0.3.*"
 rand = "0.4.*"
+yaml-rust = "0.4.0"
